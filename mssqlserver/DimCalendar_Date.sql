@@ -114,18 +114,18 @@ au_public_holidays AS
   SELECT [CalendarDate],
 		 [DayName],
 		 [HolidayDescription] = CASE
-							WHEN ([CalendarDate] = [FirstDayOfYear]) 
+							WHEN (([CalendarDate] = [FirstDayOfYear])  OR ([DayOfMonth]=2 AND [CalendarMonth]=1 AND [DayName] = 'Monday') OR ([DayOfMonth]=3 AND [CalendarMonth]=1  AND [DayName] = 'Monday'))
 								 THEN 'New Year''s Day'
-							WHEN ([DayOfMonth]=25 AND [CalendarMonth]=12)
+							WHEN (([DayOfMonth]=25 AND [CalendarMonth]=12) OR ([DayOfMonth]=26 AND [CalendarMonth]=12 AND [DayName] = 'Monday'))
 								 THEN 'Christmas Day'
-							WHEN ([DayOfMonth]=26 AND [CalendarMonth]=12)
+							WHEN ([DayOfMonth]=26 AND [CalendarMonth]=12 OR ([DayOfMonth]=27 AND [CalendarMonth]=12 AND [DayName] = 'Monday') )
 								 THEN 'Boxing Day'
 							WHEN ([DayOfMonth]=26 AND [CalendarMonth]=1)
 								 THEN 'Australian Day'
 							WHEN ([DayOfMonth]=25 AND [CalendarMonth]=4)
 								 THEN 'Anzac Day'
-							WHEN ([DayOfMonth]=26 AND [CalendarMonth]=1 AND [DayOfWeek] in(1,7))
-								 THEN 'Australian Day-Additional Day'
+							--WHEN ([DayOfMonth]=27 AND [CalendarMonth]=1 AND DayName='Monday')--DATENAME(WEEKDAY,DATEADD(day,-1,[CalendarDate])) IN(N'Saturday',N'Sunday'))
+							--	 THEN 'Australian Day-Additional Day'
 							WHEN ([DayOfWeekInMonth] = 2 AND [CalendarMonth] = 6 AND [DayName] = 'Monday')
 								THEN 'King''s Birthday'    -- (2nd Monday in June)
 							WHEN ([LastDayOfWeekInMonth] = 1 AND [CalendarMonth] = 5 AND [DayName] = 'Monday')
@@ -134,14 +134,17 @@ au_public_holidays AS
   FROM x
   WHERE 
     ([CalendarDate] = [FirstDayOfYear])
-	OR ([DayOfMonth]=25 AND [CalendarMonth]=12 AND [DayName] = 'Monday')
-	OR ([DayOfMonth]=26 AND [CalendarMonth]=12 AND [DayName] = 'Monday')
-    --OR ([DayOfMonth]=26 AND [CalendarMonth]=1 AND [DayName] IN(N'Saturday','Sunday')--Australian Day
+	OR ([DayOfMonth]=2 AND [CalendarMonth]=1  AND [DayName] = 'Monday')
+	OR ([DayOfMonth]=3 AND [CalendarMonth]=1  AND [DayName] = 'Monday')
+	OR([DayOfMonth]=25 AND [CalendarMonth]=12)
+	OR ([DayOfMonth]=26 AND [CalendarMonth]=12)-- AND [DayName] = 'Monday')
+    OR ([DayOfMonth]=27 AND [CalendarMonth]=12 AND [DayName] = 'Monday')
+	--OR ([DayOfMonth]=27 AND [CalendarMonth]=12 AND DATENAME(WEEKDAY,DATEADD(day,-1,[CalendarDate])) IN(N'Saturday',N'Sunday'))
 	OR ([DayOfMonth]=26 AND [CalendarMonth]=1 )
-    OR ([DayOfWeekInMonth] = 2 AND [CalendarMonth] = 6  AND [DayName] = 'Monday')--King's Birthday
+    OR ([DayOfWeekInMonth] = 2 AND [CalendarMonth] = 6)--King's Birthday
     OR ([DayOfMonth]=25 AND [CalendarMonth]=4)--Anzac Day
-	OR ([DayOfMonth]=25 AND [CalendarMonth]=12)
-	OR ([DayOfMonth]=26 AND [CalendarMonth]=12)
+	--OR ([DayOfMonth]=25 AND [CalendarMonth]=12)
+	--OR ([DayOfMonth]=26 AND [CalendarMonth]=12)
    -- OR ([DayOfWeekInMonth] = 2     AND [CalendarMonth] = 10 AND [DayName] = 'Monday')
    -- OR ([CalendarMonth] = 11 AND [DayOfMonth] = 11)
    -- OR ([DayOfWeekInMonth] = 4     AND [CalendarMonth] = 11 AND [DayName] = 'Thursday')
@@ -157,12 +160,12 @@ ORDER BY CalendarDate
 --TBC: Adjust calendar first day of week, last day of week and week of year considering Mondays as first day of week
   SELECT
     d.*,
-    IsHoliday = CASE 
+    IsPublicHoliday = CASE 
 		WHEN h.[CalendarDate] IS NOT NULL THEN 1 ELSE 0 END,
     h.HolidayDescription
   FROM calendar_dates AS d
   LEFT OUTER JOIN au_public_holidays AS h
   ON d.[CalendarDate] = h.[CalendarDate]
+  --WHERE HolidayDescription IS NOT NULL --AND CalendarYear BETWEEN 2019 AND 2025
   ORDER BY [CalendarDate]
 	OPTION (MAXRECURSION 0);
-
